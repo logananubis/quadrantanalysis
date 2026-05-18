@@ -12,7 +12,7 @@
     <div>
       <p class="eyebrow">Workshop board</p>
       <h1>Quadrant Analysis</h1>
-      <p class="subtitle">Drag topic cards from the sidebar onto the overlapping board.</p>
+      <p class="subtitle">Drag topic cards from the sidebar onto the board.</p>
     </div>
     <div class="actions">
       <button id="themeBtn" type="button" class="secondary icon-only" aria-label="Toggle dark mode">☾</button>
@@ -40,7 +40,9 @@
         <h2>Quadrants</h2>
         <p class="helper">Cards can overlap quadrant lines to show shared ownership.</p>
       </div>
-      <div id="board" class="board"></div>
+      <div class="board-shell">
+        <div id="board" class="board"></div>
+      </div>
     </section>
   </main>
 
