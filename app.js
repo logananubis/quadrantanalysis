@@ -13,7 +13,8 @@ const modalList = document.getElementById("modalList");
 
 let data = null;
 let boardReady = false;
-let boardMetrics = { size: 0 };
+let resizeQueued = false;
+let boardMetrics = { width: 0, height: 0 };
 
 async function loadYaml(path) {
   const response = await fetch(path);
@@ -101,6 +102,40 @@ function renderTopicGroups() {
   enableDragging();
 }
 
+function fitBoardToViewport() {
+  const shell = document.querySelector(".board-shell");
+  const rect = shell.getBoundingClientRect();
+  boardMetrics.width = Math.max(1, Math.floor(rect.width));
+  boardMetrics.height = Math.max(1, Math.floor(rect.height));
+  boardEl.style.width = `${boardMetrics.width}px`;
+  boardEl.style.height = `${boardMetrics.height}px`;
+}
+
+function scheduleBoardResize() {
+  if (resizeQueued) return;
+  resizeQueued = true;
+  requestAnimationFrame(() => {
+    resizeQueued = false;
+    fitBoardToViewport();
+    renderBoard();
+  });
+}
+
+function attachResizeObservers() {
+  const ro = new ResizeObserver(() => scheduleBoardResize());
+  ro.observe(document.querySelector(".layout"));
+  ro.observe(document.querySelector(".board-shell"));
+  window.addEventListener("resize", scheduleBoardResize);
+}
+
+function boardWidth() {
+  return boardMetrics.width || boardEl.getBoundingClientRect().width || 1;
+}
+
+function boardHeight() {
+  return boardMetrics.height || boardEl.getBoundingClientRect().height || 1;
+}
+
 function quadrantForPoint(x, y) {
   const r = boardEl.getBoundingClientRect();
   const nx = x - r.left;
@@ -113,44 +148,22 @@ function quadrantForPoint(x, y) {
   return "struggling";
 }
 
-function boardSize() {
-  const rect = boardEl.getBoundingClientRect();
-  return rect.width || 1;
-}
-
 function quadrantCenter(id) {
-  const size = boardSize();
-  const half = size / 2;
-  const pad = Math.max(80, size * 0.08);
+  const w = boardWidth();
+  const h = boardHeight();
+  const padX = Math.max(80, w * 0.08);
+  const padY = Math.max(80, h * 0.08);
   const map = {
-    "used-daily": { x: half * 0.28, y: half * 0.25 },
-    "mastered": { x: half + half * 0.10, y: half * 0.25 },
-    "discovering": { x: half * 0.28, y: half + half * 0.10 },
-    "struggling": { x: half + half * 0.10, y: half + half * 0.10 }
+    "used-daily": { x: w * 0.28, y: h * 0.25 },
+    "mastered": { x: w * 0.72, y: h * 0.25 },
+    "discovering": { x: w * 0.28, y: h * 0.72 },
+    "struggling": { x: w * 0.72, y: h * 0.72 }
   };
-  const p = map[id] || { x: half * 0.3, y: half * 0.3 };
+  const p = map[id] || { x: w * 0.3, y: h * 0.3 };
   return {
-    x: Math.max(pad, Math.min(size - pad, p.x)),
-    y: Math.max(pad, Math.min(size - pad, p.y))
+    x: Math.max(padX, Math.min(w - padX, p.x)),
+    y: Math.max(padY, Math.min(h - padY, p.y))
   };
-}
-
-function initBoardSizing() {
-  const boardShell = boardEl.parentElement;
-  const resize = () => {
-    const shellRect = boardShell.getBoundingClientRect();
-    const parentRect = boardShell.closest(".board-wrap").getBoundingClientRect();
-    const availableWidth = shellRect.width;
-    const availableHeight = window.innerHeight - parentRect.top - 32;
-    const size = Math.max(520, Math.floor(Math.min(availableWidth, availableHeight)));
-    boardEl.style.width = `${size}px`;
-    boardEl.style.height = `${size}px`;
-    boardMetrics.size = size;
-    renderBoard();
-  };
-
-  resize();
-  window.addEventListener("resize", resize);
 }
 
 function attachBoardDropHandlers() {
@@ -174,7 +187,10 @@ function attachBoardDropHandlers() {
     const x = Math.max(0, Math.min(r.width - cardWidth, e.clientX - r.left - cardWidth / 2));
     const y = Math.max(0, Math.min(r.height - cardHeight, e.clientY - r.top - cardHeight / 2));
 
-    positions[payload.key] = { x, y };
+    positions[payload.key] = {
+      xPct: x / r.width,
+      yPct: y / r.height
+    };
     placements[payload.key] = quadrantForPoint(e.clientX, e.clientY);
 
     save();
@@ -221,7 +237,10 @@ function makeCardDraggable(card) {
     const y = e.clientY - r.top - offsetY;
     const nx = Math.max(0, Math.min(r.width - w, x));
     const ny = Math.max(0, Math.min(r.height - h, y));
-    positions[card.dataset.key] = { x: nx, y: ny };
+    positions[card.dataset.key] = {
+      xPct: nx / r.width,
+      yPct: ny / r.height
+    };
     save();
     card.style.left = `${nx}px`;
     card.style.top = `${ny}px`;
@@ -235,8 +254,9 @@ function makeCardDraggable(card) {
 
     const pos = positions[card.dataset.key];
     if (pos) {
-      const centerX = pos.x + card.offsetWidth / 2;
-      const centerY = pos.y + card.offsetHeight / 2;
+      const r = boardEl.getBoundingClientRect();
+      const centerX = (pos.xPct * r.width) + card.offsetWidth / 2;
+      const centerY = (pos.yPct * r.height) + card.offsetHeight / 2;
       placements[card.dataset.key] = quadrantForPoint(
         boardEl.getBoundingClientRect().left + centerX,
         boardEl.getBoundingClientRect().top + centerY
@@ -264,9 +284,12 @@ function renderBoard() {
     <div class="quadrant-label q-label-4">Struggling with</div>
     <div class="drop-layer" id="dropLayer">
       ${cards.length ? cards.map(item => {
-        const pos = positions[item.key] || quadrantCenter(placements[item.key]);
+        const r = boardEl.getBoundingClientRect();
+        const pos = positions[item.key];
+        const px = pos ? pos.xPct * r.width : quadrantCenter(placements[item.key]).x;
+        const py = pos ? pos.yPct * r.height : quadrantCenter(placements[item.key]).y;
         return `
-          <div class="card" data-key="${item.key}" style="left:${pos.x}px; top:${pos.y}px;">
+          <div class="card" data-key="${item.key}" style="left:${px}px; top:${py}px;">
             <div class="row">
               <div>
                 <strong>${item.topic}</strong>
@@ -352,7 +375,9 @@ async function init() {
   ensureShape();
   renderPrompts();
   renderTopicGroups();
-  initBoardSizing();
+  fitBoardToViewport();
+  attachResizeObservers();
+  renderBoard();
 
   exportBtn.addEventListener("click", exportJson);
   resetBtn.addEventListener("click", resetBoard);
