@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Workshop Quadrant Board</title>
+  <meta name="description" content="Interactive workshop board for assessing team capability across topics." />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div>
+      <p class="eyebrow">Workshop board</p>
+      <h1>Quadrant Analysis</h1>
+      <p class="subtitle">Drag topic cards from the sidebar onto the overlapping board.</p>
+    </div>
+    <div class="actions">
+      <button id="themeBtn" type="button" class="secondary icon-only" aria-label="Toggle dark mode">☾</button>
+      <button id="exportBtn" type="button">Export JSON</button>
+      <button id="resetBtn" type="button" class="secondary">Reset</button>
+    </div>
+  </header>
+
+  <main class="layout">
+    <aside class="sidebar">
+      <section class="panel">
+        <h2>Topics</h2>
+        <p class="helper">Collapsed groups keep the list compact. Drag a topic to place it.</p>
+        <div id="topicGroups" class="groups"></div>
+      </section>
+
+      <section class="panel">
+        <h2>Facilitator prompts</h2>
+        <ul class="prompt-list" id="promptList"></ul>
+      </section>
+    </aside>
+
+    <section class="board-wrap">
+      <div class="board-header">
+        <h2>Quadrants</h2>
+        <p class="helper">Cards can overlap quadrant lines to show shared ownership.</p>
+      </div>
+      <div id="board" class="board"></div>
+    </section>
+  </main>
+
+  <dialog id="modal" class="modal">
+    <form method="dialog" class="modal-card">
+      <div class="modal-header">
+        <h3 id="modalTitle">Topics</h3>
+        <button class="icon-btn" value="cancel" aria-label="Close">×</button>
+      </div>
+      <ul id="modalList" class="modal-list"></ul>
+      <div class="modal-footer">
+        <button value="cancel" class="secondary" type="submit">Close</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script src="https://cdn.jsdelivr.net/npm/js-yaml@4/dist/js-yaml.min.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

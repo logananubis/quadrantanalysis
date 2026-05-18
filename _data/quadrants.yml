@@ -1,0 +1,13 @@
+quadrants:
+  - id: used-daily
+    label: Used daily
+    description: Active in live work
+  - id: mastered
+    label: Mastered
+    description: Independent and can coach
+  - id: discovering
+    label: Discovering
+    description: Some exposure, building confidence
+  - id: struggling
+    label: Struggling with
+    description: Needs support or training

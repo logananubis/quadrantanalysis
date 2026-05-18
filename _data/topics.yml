@@ -1,0 +1,61 @@
+groups:
+  - name: AAP
+    summary: Core platform skills and operational topics.
+    topics:
+      - Inventories
+      - Credentials
+      - Job templates
+      - Workflow templates
+      - Projects / SCM sync
+      - Execution environments
+      - Surveys
+      - Schedules
+      - Notifications
+      - Activity / job history
+      - RBAC / permissions
+      - Troubleshooting failed jobs
+
+  - name: YAML
+    summary: Syntax and file-structure basics.
+    topics:
+      - Indentation
+      - Lists and dictionaries
+      - Variables
+      - Quoting and escaping
+      - Multi-line strings
+      - Nested structures
+      - Anchors and aliases
+      - Debugging broken YAML
+
+  - name: Git
+    summary: Source control and collaboration flow.
+    topics:
+      - Clone / pull / push
+      - Branching
+      - Commits
+      - Merge requests / pull requests
+      - Merge conflicts
+      - Rebase basics
+      - Commit messages
+      - Remotes
+      - Reset / revert basics
+
+  - name: Windows automation
+    summary: Practical Windows + Ansible delivery skills.
+    topics:
+      - WinRM connectivity
+      - Credentials / privilege escalation
+      - Windows modules
+      - PowerShell familiarity
+      - Package / service management
+      - File and registry handling
+      - Reboot handling
+      - Idempotency
+      - Error interpretation
+      - Inventory targeting
+
+prompts:
+  - What do they do without help today?
+  - What breaks most often in real work?
+  - What would move this topic one quadrant higher?
+  - Which topics block delivery most urgently?
